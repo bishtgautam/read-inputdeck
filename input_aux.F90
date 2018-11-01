@@ -125,7 +125,6 @@ module Input_Aux_module
             InputReadFilenames, &
             InputGetLineCount, &
             InputReadToBuffer, &
-            InputReadASCIIDbase, &
             InputKeywordUnrecognized, &
             InputCheckMandatoryUnits, &
             InputDbaseDestroy, &
@@ -162,7 +161,6 @@ function InputCreate1(fid,path,filename,option)
   type(input_type), pointer :: InputCreate1
   PetscInt :: istatus  
   PetscInt :: islash  
-  character(len=MAXSTRINGLENGTH) :: local_path
   character(len=MAXSTRINGLENGTH) :: full_path
   type(input_type), pointer :: input
   PetscBool, parameter :: back = PETSC_TRUE
@@ -1710,8 +1708,6 @@ function getCommandLineArgumentCount()
 
   implicit none
   
-  integer :: iargc
-  
   PetscInt :: getCommandLineArgumentCount
   
   ! initialize to zero
@@ -1926,175 +1922,6 @@ subroutine InputReadToBuffer(input, buffer, option)
 
 end subroutine InputReadToBuffer
 
-! ************************************************************************** !
-
-subroutine InputReadASCIIDbase(filename,option)
-  ! 
-  ! Read in an ASCII database
-  ! 
-  ! Author: Glenn Hammond
-  ! Date: 08/19/14
-  ! 
-  use Option_module
-  use String_module
-  
-  implicit none
-  
-  character(len=*) :: filename
-  type(option_type) :: option
-
-  character(len=MAXSTRINGLENGTH) :: string
-  character(len=MAXWORDLENGTH) :: word
-  character(len=MAXWORDLENGTH), allocatable :: words(:)
-  character(len=MAXWORDLENGTH) :: object_name
-  type(input_type), pointer :: input
-  PetscInt :: icount
-  PetscInt :: value_count
-  PetscInt :: value_index
-  PetscInt :: value_type
-  PetscInt :: num_values_in_dataset
-  PetscInt :: num_words, num_ints, num_reals
-  
-  input => InputCreate(IUNIT_TEMP,filename,option)
-  
-  icount = 0
-  num_values_in_dataset = 0
-  num_ints = 0
-  num_reals = 0
-  num_words = 0
-  do
-    call InputReadPflotranString(input,option)
-    if (InputError(input)) exit
-    call InputReadNChars(input,option,string,MAXSTRINGLENGTH,PETSC_FALSE)
-    if (len_trim(string) > MAXWORDLENGTH) then
-      option%io_buffer = 'ASCII DBASE object names must be shorter than &
-        &32 characters: ' // trim(string)
-      call printErrMsg(option)
-    endif
-    word = trim(string)
-    if (StringStartsWithAlpha(word)) then
-      icount = icount + 1
-      if (icount == 1) then
-        string = input%buf
-        do
-          call InputReadWord(input,option,word,PETSC_TRUE)
-          if (input%ierr /= 0) exit
-          num_values_in_dataset = num_values_in_dataset + 1
-        enddo
-        input%buf = string
-      endif
-      input%ierr = 0
-      call InputReadWord(input,option,word,PETSC_TRUE)
-      call InputErrorMsg(input,option,'value','ASCII Dbase')
-      select case(StringIntegerDoubleOrWord(word))
-        case(STRING_IS_AN_INTEGER)
-          num_ints = num_ints + 1
-        case(STRING_IS_A_DOUBLE)
-          num_reals = num_reals + 1
-        case(STRING_IS_A_WORD)
-          num_words = num_words + 1
-      end select
-    endif
-  enddo
-
-  value_index = 1
-  if (option%id > 0) then
-    if (option%id > num_values_in_dataset) then
-      write(word,*) num_values_in_dataset
-        option%io_buffer = 'Data in DBASE_FILENAME "' // &
-        trim(filename) // &
-        '" is too small (' // trim(adjustl(word)) // &
-        ') for number of realizations.'
-      call printErrMsg(option)
-    endif
-    value_index = option%id
-  endif
-  allocate(words(num_values_in_dataset))
-  words = ''
-  
-  call InputRewind(input)
-  allocate(dbase)
-  nullify(dbase%icard)
-  nullify(dbase%rcard)
-  nullify(dbase%ccard)
-  nullify(dbase%ivalue)
-  nullify(dbase%rvalue)
-  nullify(dbase%cvalue)
-  if (num_ints > 0) then
-    allocate(dbase%icard(num_ints))
-    dbase%icard = ''
-    allocate(dbase%ivalue(num_ints))
-    dbase%ivalue = UNINITIALIZED_INTEGER
-  endif
-  if (num_reals > 0) then
-    allocate(dbase%rcard(num_reals))
-    dbase%rcard = ''
-    allocate(dbase%rvalue(num_reals))
-    dbase%rvalue = UNINITIALIZED_DOUBLE
-  endif
-  if (num_words > 0) then
-    allocate(dbase%ccard(num_words))
-    dbase%ccard = ''
-    allocate(dbase%cvalue(num_words))
-    dbase%cvalue = '-999'
-  endif
-  num_ints = 0
-  num_reals = 0
-  num_words = 0
-  do
-    call InputReadPflotranString(input,option)
-    if (InputError(input)) exit
-    call InputReadWord(input,option,word,PETSC_FALSE)
-    if (StringStartsWithAlpha(word)) then
-      object_name = word
-      words = ''
-      value_count = 0
-      do
-        call InputReadWord(input,option,word,PETSC_TRUE)
-        if (input%ierr /= 0) exit
-        value_count = value_count + 1
-        if (value_count <= num_values_in_dataset) &
-          words(value_count) = word
-      enddo
-      if (value_count /= num_values_in_dataset) then
-        write(word,*) value_count
-        option%io_buffer = 'Data in DBASE_FILENAME "' // &
-          trim(object_name) // &
-          '" has an inconsistent number of values (' // &
-          trim(adjustl(word)) // &
-          ') for number of realizations ('
-        write(word,*) num_values_in_dataset
-        option%io_buffer = trim(option%io_buffer) // &
-          trim(adjustl(word)) // ').'
-        call printErrMsg(option)
-      endif
-      call StringToUpper(object_name)
-      string = words(value_index)
-      value_type = StringIntegerDoubleOrWord(string)
-      string = words(value_index)
-      select case(value_type)
-        case(STRING_IS_AN_INTEGER)
-          num_ints = num_ints + 1
-          dbase%icard(num_ints) = adjustl(object_name)
-          call InputReadInt(string,option,dbase%ivalue(num_ints),input%ierr)
-          call InputErrorMsg(input,option,'ivalue','ASCII Dbase '//object_name)
-        case(STRING_IS_A_DOUBLE)
-          num_reals = num_reals + 1
-          dbase%rcard(num_reals) = adjustl(object_name)
-          call InputReadDouble(string,option,dbase%rvalue(num_reals),input%ierr)
-          call InputErrorMsg(input,option,'rvalue','ASCII Dbase '//object_name)
-        case(STRING_IS_A_WORD)
-          num_words = num_words + 1
-          dbase%ccard(num_words) = adjustl(object_name)
-          dbase%cvalue(num_words) = words(value_index)
-      end select
-    endif
-  enddo
-  deallocate(words)
-  
-  call InputDestroy(input)
-  
-end subroutine InputReadASCIIDbase
 
 ! ************************************************************************** !
 

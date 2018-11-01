@@ -29,10 +29,7 @@ FPPFLAGS = ${MYFLAGS}
 CLEANFILES = readinputdeck
 
 input_aux.o : option.o pflotran_constants.o string.o units.o
-logging.o : pflotran_constants.o
-option.o : logging.o option_flow.o option_transport.o pflotran_constants.o
-option_flow.o : pflotran_constants.o
-option_transport.o : pflotran_constants.o
+option.o : pflotran_constants.o
 pflotran_constants.o :
 string.o : pflotran_constants.o
 units.o : option.o pflotran_constants.o
@@ -42,10 +39,7 @@ readinputdeck.o : input_aux.o
 # Concatentate dependency groups 
 pflotran_obj = \
 	input_aux.o \
-	logging.o \
 	option.o \
-	option_flow.o \
-	option_transport.o \
 	pflotran_constants.o \
 	string.o \
 	units.o \
