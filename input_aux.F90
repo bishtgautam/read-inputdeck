@@ -4,7 +4,7 @@ module Input_Aux_module
   use petscsys
   use Option_module
 
-  use PFLOTRAN_Constants_module
+  use Constants_module
 
   implicit none
 

@@ -5,7 +5,7 @@ module Option_module
 
 #include "petsc/finclude/petscsys.h"
   use petscsys
-  use PFLOTRAN_Constants_module
+  use Constants_module
 
   implicit none
 
@@ -447,8 +447,6 @@ subroutine OptionPrint(string,option)
   ! Author: Glenn Hammond
   ! Date: 01/29/09
   !
-  use PFLOTRAN_Constants_module
-
   implicit none
 
   character(len=*) :: string

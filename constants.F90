@@ -1,4 +1,4 @@
-module PFLOTRAN_Constants_module
+module Constants_module
 
 ! IMPORTANT NOTE: This module can have no dependencies on other modules!!!
 
@@ -32,4 +32,4 @@ module PFLOTRAN_Constants_module
   PetscInt, parameter, public :: UNINITIALIZED_INTEGER = -999
   PetscReal, parameter, public :: UNINITIALIZED_DOUBLE = -999.d0
 
-end module PFLOTRAN_Constants_module
+end module Constants_module

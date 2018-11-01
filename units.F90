@@ -2,7 +2,7 @@ module Units_module
 
 #include "petsc/finclude/petscsys.h"
   use petscsys
-  use PFLOTRAN_Constants_module
+  use Constants_module
 
   implicit none
   

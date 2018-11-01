@@ -28,11 +28,11 @@ FPPFLAGS = ${MYFLAGS}
 
 CLEANFILES = readinputdeck
 
-input_aux.o : option.o pflotran_constants.o string.o units.o
-option.o : pflotran_constants.o
-pflotran_constants.o :
-string.o : pflotran_constants.o
-units.o : option.o pflotran_constants.o
+input_aux.o : option.o constants.o string.o units.o
+option.o : constants.o
+constants.o :
+string.o : constants.o
+units.o : option.o constants.o
 readinputdeck.o : input_aux.o
 
 
@@ -40,7 +40,7 @@ readinputdeck.o : input_aux.o
 pflotran_obj = \
 	input_aux.o \
 	option.o \
-	pflotran_constants.o \
+	constants.o \
 	string.o \
 	units.o \
 	read_inputdeck.o

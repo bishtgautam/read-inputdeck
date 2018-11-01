@@ -2,7 +2,7 @@ program read_inputdeck
   !
 #include <petsc/finclude/petsc.h>
   !
-  use PFLOTRAN_Constants_module, only : IN_UNIT, MAXSTRINGLENGTH, MAXWORDLENGTH
+  use Constants_module, only : IN_UNIT, MAXSTRINGLENGTH, MAXWORDLENGTH
   use Option_module
   use Input_Aux_module
   use petscsys
