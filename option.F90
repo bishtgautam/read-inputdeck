@@ -13,7 +13,6 @@ module Option_module
 
   type, public :: option_type
 
-    PetscInt :: id                         ! id of realization
     PetscInt :: successful_exit_code       ! code passed out of PFLOTRAN
                                            ! indicating successful completion
                                            ! of simulation
@@ -142,7 +141,6 @@ subroutine OptionInitAll(option)
   ! These variables should only be initialized once at the beginning of a
   ! PFLOTRAN run (regardless of whether stochastic)
 
-  option%id = 0
   option%successful_exit_code = 0
 
   option%global_comm = 0
@@ -157,6 +155,11 @@ subroutine OptionInitAll(option)
   option%mygroup_id = 0
 
   option%io_rank = 0
+
+  option%print_screen_flag = PETSC_FALSE
+  option%print_file_flag = PETSC_FALSE
+  option%print_to_screen = PETSC_TRUE
+  option%print_to_file = PETSC_TRUE
 
   option%input_filename = ''
 
@@ -525,7 +528,6 @@ subroutine OptionInitPetsc(option)
 
   type(option_type) :: option
 
-  character(len=MAXSTRINGLENGTH) :: string
   PetscErrorCode :: ierr
 
   PETSC_COMM_WORLD = option%mycomm
